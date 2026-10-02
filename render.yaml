@@ -6,8 +6,7 @@ services:
     plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"
-    healthCheckPath: /health
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
         value: postgresql://neondb_owner:npg_xn2gPuVrUBt4@ep-sparkling-cell-b50cepb1-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require
