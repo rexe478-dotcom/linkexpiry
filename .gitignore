@@ -71,3 +71,5 @@ Thumbs.db
 .neon
 
 .vercel
+.vercel_python_packages
+
