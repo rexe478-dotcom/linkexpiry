@@ -1,4 +1,11 @@
-from contextlib import asynccontextmanager
+import sys
+import os
+
+# Guarantee root backend directory is in sys.path
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -6,23 +13,6 @@ from fastapi.exceptions import RequestValidationError
 
 from app.core.config import settings
 from app.api.routes.messages import router as messages_router
-from app.db.database import engine, Base
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    if engine is not None:
-        try:
-            async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
-        except Exception:
-            pass
-    yield
-    if engine is not None:
-        try:
-            await engine.dispose()
-        except Exception:
-            pass
 
 
 app = FastAPI(
@@ -31,24 +21,13 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan,
 )
-
-origins = [
-    settings.frontend_origin,
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:4173",
-]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_origin_regex=r"^https?://.*",
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -70,9 +49,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
+@app.get("/", tags=["system"])
+@app.get("/api", tags=["system"])
+async def root_health():
+    return {"status": "healthy", "service": settings.app_name, "version": "1.0.0"}
+
+
 @app.get("/health", tags=["system"])
+@app.get("/api/health", tags=["system"])
 async def health_check():
     return {"status": "healthy", "service": settings.app_name}
 
 
-app.include_router(messages_router, prefix=settings.api_prefix)
+app.include_router(messages_router, prefix="/api")
+app.include_router(messages_router, prefix="")

@@ -50,13 +50,16 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 @app.get("/", tags=["system"])
+@app.get("/api", tags=["system"])
 async def root_health():
     return {"status": "healthy", "service": settings.app_name, "version": "1.0.0"}
 
 
 @app.get("/health", tags=["system"])
+@app.get("/api/health", tags=["system"])
 async def health_check():
     return {"status": "healthy", "service": settings.app_name}
 
 
-app.include_router(messages_router, prefix=settings.api_prefix)
+app.include_router(messages_router, prefix="/api")
+app.include_router(messages_router, prefix="")
