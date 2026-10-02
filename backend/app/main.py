@@ -74,6 +74,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
+@app.get("/", tags=["system"])
+async def root_health():
+    return {"status": "healthy", "service": settings.app_name, "version": "1.0.0"}
+
+
 @app.get("/health", tags=["system"])
 async def health_check():
     return {"status": "healthy", "service": settings.app_name}
