@@ -1,7 +1,5 @@
 import sys
 import os
-import asyncio
-from contextlib import asynccontextmanager
 
 # Guarantee root backend directory is in sys.path
 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -15,28 +13,6 @@ from fastapi.exceptions import RequestValidationError
 
 from app.core.config import settings
 from app.api.routes.messages import router as messages_router
-from app.db.database import engine, Base
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    if engine is not None:
-        try:
-            async def init_db():
-                try:
-                    async with engine.begin() as conn:
-                        await conn.run_sync(Base.metadata.create_all)
-                except Exception as e:
-                    print(f"Database sync notice: {e}")
-            asyncio.create_task(init_db())
-        except Exception:
-            pass
-    yield
-    if engine is not None:
-        try:
-            await engine.dispose()
-        except Exception:
-            pass
 
 
 app = FastAPI(
@@ -45,10 +21,8 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan,
 )
 
-# Standard robust CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=r"^https?://.*",
