@@ -1,12 +1,13 @@
 import sys
 import os
+import asyncio
+from contextlib import asynccontextmanager
 
 # Guarantee root backend directory is in sys.path
 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
-from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -21,8 +22,13 @@ from app.db.database import engine, Base
 async def lifespan(app: FastAPI):
     if engine is not None:
         try:
-            async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
+            async def init_db():
+                try:
+                    async with engine.begin() as conn:
+                        await conn.run_sync(Base.metadata.create_all)
+                except Exception as e:
+                    print(f"Database sync notice: {e}")
+            asyncio.create_task(init_db())
         except Exception:
             pass
     yield
@@ -41,15 +47,6 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan,
 )
-
-origins = [
-    settings.frontend_origin,
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:4173",
-]
 
 app.add_middleware(
     CORSMiddleware,
