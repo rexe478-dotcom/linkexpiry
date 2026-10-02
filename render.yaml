@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: linkexpiry-backend
+    env: python
+    region: ohio
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && alembic upgrade head
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_xn2gPuVrUBt4@ep-sparkling-cell-b50cepb1-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require
+      - key: MESSAGE_ENCRYPTION_KEY
+        value: 3OcDCnNvsIPMAId-yX7cKjdq5n8-ZigEcs4SF9VOP6E=
+      - key: FRONTEND_ORIGIN
+        value: "*"

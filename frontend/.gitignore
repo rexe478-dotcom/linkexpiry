@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 testsprite_tests/tmp/
 testsprite_tests/tmp/config.json
+
+.vercel

@@ -1,0 +1,18 @@
+{
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/app/main.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": {
+    "DATABASE_URL": "postgresql://neondb_owner:npg_xn2gPuVrUBt4@ep-sparkling-cell-b50cepb1-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require",
+    "MESSAGE_ENCRYPTION_KEY": "3OcDCnNvsIPMAId-yX7cKjdq5n8-ZigEcs4SF9VOP6E="
+  }
+}

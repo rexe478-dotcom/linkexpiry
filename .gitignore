@@ -69,3 +69,5 @@ Thumbs.db
 # Agent & MCP Local Credentials
 .agents/mcp_config.json
 .neon
+
+.vercel
