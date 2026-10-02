@@ -27,19 +27,9 @@ class Settings(BaseSettings):
         elif url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql+asyncpg://", 1)
         
-        # asyncpg uses ssl=require instead of sslmode=require
-        if "sslmode=require" in url:
-            url = url.replace("sslmode=require", "ssl=require")
-        if "channel_binding=" in url:
-            # strip channel_binding parameter for asyncpg compatibility if present
-            import urllib.parse
-            parsed = urllib.parse.urlparse(url)
-            query_params = urllib.parse.parse_qs(parsed.query)
-            query_params.pop("channel_binding", None)
-            if "ssl" not in query_params and "sslmode" not in query_params:
-                query_params["ssl"] = ["require"]
-            new_query = urllib.parse.urlencode(query_params, doseq=True)
-            url = urllib.parse.urlunparse(parsed._replace(query=new_query))
+        # Strip query parameters so connect_args handles SSL cleanly and natively
+        if "?" in url:
+            url = url.split("?")[0]
         return url
 
     def get_encryption_key(self) -> bytes:

@@ -17,6 +17,7 @@ if not is_memory and not is_sqlite:
         engine = create_async_engine(
             DATABASE_URL,
             echo=settings.debug,
+            connect_args={"ssl": True},
             pool_pre_ping=True,
         )
         AsyncSessionLocal = async_sessionmaker(
@@ -25,7 +26,8 @@ if not is_memory and not is_sqlite:
             expire_on_commit=False,
             autoflush=False,
         )
-    except Exception:
+    except Exception as e:
+        print(f"PostgreSQL connection init notice: {e}")
         engine = None
         AsyncSessionLocal = None
 else:
@@ -43,7 +45,8 @@ else:
             expire_on_commit=False,
             autoflush=False,
         )
-    except Exception:
+    except Exception as e:
+        print(f"SQLite connection init notice: {e}")
         engine = None
         AsyncSessionLocal = None
 
