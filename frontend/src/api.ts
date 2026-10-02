@@ -5,8 +5,14 @@ import type {
   RevealMessageResponse,
 } from './types';
 
-const rawBase = import.meta.env.VITE_API_BASE_URL || '/api';
-const API_BASE = rawBase.endsWith('/api') ? rawBase : rawBase.endsWith('/') ? `${rawBase}api` : `${rawBase}/api`;
+const rawBase =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? '/api' : 'https://linkexpiry-api.onrender.com/api');
+const API_BASE = rawBase.endsWith('/api')
+  ? rawBase
+  : rawBase.endsWith('/')
+  ? `${rawBase}api`
+  : `${rawBase}/api`;
 
 export class ApiService {
   static async createMessage(data: CreateMessageRequest): Promise<CreateMessageResponse> {
