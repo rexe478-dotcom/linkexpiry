@@ -9,7 +9,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY backend/ .
+COPY backend/app /app/app
+COPY backend/alembic /app/alembic
+COPY backend/alembic.ini /app/alembic.ini
+COPY backend/run.py /app/run.py
 
 EXPOSE 10000
 
