@@ -17,7 +17,7 @@ if not is_memory and not is_sqlite:
         engine = create_async_engine(
             DATABASE_URL,
             echo=settings.debug,
-            connect_args={"ssl": True},
+            connect_args={"ssl": "require"},
             pool_pre_ping=True,
         )
         AsyncSessionLocal = async_sessionmaker(
