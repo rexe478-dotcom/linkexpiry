@@ -20,8 +20,6 @@ import app.db.models  # Ensure models are loaded
 # access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
@@ -29,13 +27,7 @@ target_metadata = Base.metadata
 
 
 def get_url():
-    url = settings.database_url
-    # For alembic, ensure async driver prefixes are handled
-    if url.startswith("sqlite+aiosqlite://"):
-        return url
-    if url.startswith("postgresql+asyncpg://"):
-        return url
-    return url
+    return settings.async_database_url
 
 
 def run_migrations_offline() -> None:
@@ -60,9 +52,6 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
-    """In this scenario we need to create an Engine
-    and associate a connection with the context.
-    """
     configuration = config.get_section(config.config_ini_section) or {}
     configuration["sqlalchemy.url"] = get_url()
 
