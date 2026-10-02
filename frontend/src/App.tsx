@@ -34,13 +34,53 @@ export const App: React.FC = () => {
     description?: string;
   } | null>(null);
 
-  // Sync route with URL path
-  const syncRouteFromPath = useCallback(() => {
-    const path = window.location.pathname;
-    const cleanPath = path.replace(/^\/+|\/+$/g, '');
+  // Extract token from search params, hash, or pathname
+  const extractTokenFromLocation = (): string | null => {
+    // 1. Check search params: ?token=XYZ or ?t=XYZ
+    const params = new URLSearchParams(window.location.search);
+    const paramToken = params.get('token') || params.get('t') || params.get('m');
+    if (paramToken && paramToken.trim()) {
+      return paramToken.trim();
+    }
 
-    if (cleanPath && cleanPath !== 'index.html') {
-      setToken(cleanPath);
+    // 2. Check hash: #/XYZ or #XYZ
+    if (window.location.hash) {
+      const cleanHash = window.location.hash.replace(/^#\/?/, '').trim();
+      if (cleanHash && cleanHash !== 'index.html') {
+        return cleanHash;
+      }
+    }
+
+    // 3. Check pathname
+    const rawPath = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    const segments = rawPath.split('/').filter(Boolean);
+
+    if (segments.length === 0) {
+      return null;
+    }
+
+    // If hosted under subpath (e.g., /linkexpiry/)
+    if (segments[0].toLowerCase() === 'linkexpiry') {
+      if (segments.length > 1 && segments[1] !== 'index.html') {
+        return segments[1];
+      }
+      return null;
+    }
+
+    // If single segment that isn't index.html
+    if (segments.length === 1 && segments[0] !== 'index.html') {
+      return segments[0];
+    }
+
+    return null;
+  };
+
+  // Sync route with URL
+  const syncRouteFromPath = useCallback(() => {
+    const foundToken = extractTokenFromLocation();
+
+    if (foundToken) {
+      setToken(foundToken);
       setCreatedData(null);
       setRevealedData(null);
       setViewError(null);
@@ -60,7 +100,11 @@ export const App: React.FC = () => {
     };
 
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
   }, [syncRouteFromPath]);
 
   // Check status when token changes
@@ -117,7 +161,12 @@ export const App: React.FC = () => {
 
   // Navigate to home (reset everything)
   const navigateToHome = () => {
-    window.history.pushState({}, '', '/');
+    const rawPath = window.location.pathname;
+    const homePath = rawPath.includes('/linkexpiry') ? '/linkexpiry/' : '/';
+    window.history.pushState({}, '', homePath);
+    if (window.location.hash) {
+      window.location.hash = '';
+    }
     setToken(null);
     setCreatedData(null);
     setStatusData(null);
@@ -132,7 +181,14 @@ export const App: React.FC = () => {
     setCreateError(null);
     try {
       const res = await ApiService.createMessage(data);
-      setCreatedData(res);
+      const currentOrigin = window.location.origin;
+      const rawPath = window.location.pathname.replace(/\/index\.html$/, '').replace(/\/+$/, '');
+      const cleanBase = `${currentOrigin}${rawPath}`;
+      const shareUrl = `${cleanBase}/#/${res.token}`;
+      setCreatedData({
+        ...res,
+        url: shareUrl,
+      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to create message';
       setCreateError(msg);
