@@ -2,15 +2,14 @@ from datetime import datetime
 from typing import Literal, Optional
 from pydantic import BaseModel, Field, field_validator
 
-SUPPORTED_EXPIRATION_MINUTES = {10, 60, 1440, 10080}
-MAX_MESSAGE_LENGTH = 500
+MAX_MESSAGE_LENGTH = 10000
 
 
 class MessageCreate(BaseModel):
     message: str = Field(..., description="The secret message content")
     expiration_minutes: int = Field(
         default=60,
-        description="Expiration time in minutes (10, 60, 1440, 10080)"
+        description="Expiration time in minutes (1 to 43200)"
     )
 
     @field_validator("message")
@@ -26,10 +25,8 @@ class MessageCreate(BaseModel):
     @field_validator("expiration_minutes")
     @classmethod
     def validate_expiration(cls, v: int) -> int:
-        if v not in SUPPORTED_EXPIRATION_MINUTES:
-            raise ValueError(
-                f"Invalid expiration period. Supported options are: {sorted(list(SUPPORTED_EXPIRATION_MINUTES))} minutes"
-            )
+        if v < 1 or v > 43200:
+            raise ValueError("Expiration must be between 1 minute and 43200 minutes (30 days)")
         return v
 
 
